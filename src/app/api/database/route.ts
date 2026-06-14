@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     }
 
     let image = '';
-    let env = [];
+    let env: string[] = [];
     let portBindings: any = {};
     let exposedPorts: any = {};
 
