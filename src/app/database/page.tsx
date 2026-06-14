@@ -35,10 +35,13 @@ export default function DatabasePage() {
     fetchDatabases();
   }, []);
 
+  const [successMsg, setSuccessMsg] = useState('');
+
   const handleCreate = async (e: any) => {
     e.preventDefault();
     setCreating(true);
     setError('');
+    setSuccessMsg('');
     try {
       const res = await fetch('/api/database', {
         method: 'POST',
@@ -50,6 +53,7 @@ export default function DatabasePage() {
         setShowModal(false);
         setFormName('');
         setFormPassword('');
+        setSuccessMsg(`Banco de dados criado com sucesso! Porta exposta: ${data.allocatedPort}`);
         fetchDatabases();
       } else {
         setError(data.message);
@@ -82,6 +86,12 @@ export default function DatabasePage() {
         <div className="mb-4" style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger-color)', borderRadius: '8px', color: 'var(--danger-color)' }}>
           <AlertCircle size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
           {error}
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="mb-4" style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', borderRadius: '8px', color: 'var(--success-color)' }}>
+          <strong>✓ Sucesso:</strong> {successMsg}
         </div>
       )}
 

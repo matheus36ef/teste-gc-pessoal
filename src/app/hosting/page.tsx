@@ -35,10 +35,13 @@ export default function HostingPage() {
     fetchApps();
   }, []);
 
+  const [successMsg, setSuccessMsg] = useState('');
+
   const handleCreate = async (e: any) => {
     e.preventDefault();
     setCreating(true);
     setError('');
+    setSuccessMsg('');
     try {
       const res = await fetch('/api/hosting', {
         method: 'POST',
@@ -49,6 +52,7 @@ export default function HostingPage() {
       if (data.status === 'success') {
         setShowModal(false);
         setFormName('');
+        setSuccessMsg(`App hospedado com sucesso! Acesse na porta: ${data.allocatedPort}`);
         fetchApps();
       } else {
         setError(data.message);
@@ -81,6 +85,12 @@ export default function HostingPage() {
         <div className="mb-4" style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger-color)', borderRadius: '8px', color: 'var(--danger-color)' }}>
           <AlertCircle size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
           {error}
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="mb-4" style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', borderRadius: '8px', color: 'var(--success-color)' }}>
+          <strong>✓ Sucesso:</strong> {successMsg}
         </div>
       )}
 

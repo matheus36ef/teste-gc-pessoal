@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import Docker from 'dockerode';
-
-const docker = new Docker({ socketPath: process.platform === 'win32' ? '//./pipe/docker_engine' : '/var/run/docker.sock' });
+import { docker, ensureNetwork, ensureImage, sanitizeName, NETWORK_NAME } from '@/lib/docker-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +13,7 @@ export async function GET() {
         name: c.Names[0].replace(/^\//, ''),
         image: c.Image,
         status: c.State === 'running' ? 'online' : 'offline',
-        ports: c.Ports.map(p => `${p.PublicPort}->${p.PrivatePort}`).join(', ')
+        ports: c.Ports.filter(p => p.PublicPort).map(p => `${p.PublicPort}->${p.PrivatePort}`).join(', ')
       }));
 
     return NextResponse.json({ status: 'success', apps });
@@ -33,33 +31,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ status: 'error', message: 'Faltam campos obrigatórios' }, { status: 400 });
     }
 
-    // Faz o pull da imagem
-    await new Promise((resolve, reject) => {
-      docker.pull(image, (err: any, stream: any) => {
-        if (err) return reject(err);
-        docker.modem.followProgress(stream, onFinished, onProgress);
-        function onFinished(err: any, output: any) {
-          if (err) return reject(err);
-          resolve(output);
-        }
-        function onProgress(event: any) {}
-      });
-    });
+    const safeName = sanitizeName(name);
+    if (!safeName) return NextResponse.json({ status: 'error', message: 'Nome inválido' }, { status: 400 });
+
+    await ensureNetwork();
+    await ensureImage(image);
 
     const portBindings: any = {};
     const exposedPorts: any = {};
     
-    // Mapeia a porta interna do container para uma aleatória ou específica
     exposedPorts[`${port}/tcp`] = {};
-    portBindings[`${port}/tcp`] = [{ HostPort: '0' }]; // 0 significa porta aleatória
+    portBindings[`${port}/tcp`] = [{ HostPort: '0' }]; 
+
+    const containerName = `app-${safeName}`;
+
+    try {
+      const old = docker.getContainer(containerName);
+      await old.remove({ force: true });
+    } catch (e) {}
 
     const container = await docker.createContainer({
       Image: image,
-      name: `app-${name}`,
+      name: containerName,
       ExposedPorts: exposedPorts,
       HostConfig: {
         PortBindings: portBindings,
-        RestartPolicy: { Name: 'always' }
+        RestartPolicy: { Name: 'always' },
+        NetworkMode: NETWORK_NAME
       },
       Labels: {
         'minha-nuvem-type': 'hosting'
@@ -68,7 +66,14 @@ export async function POST(req: Request) {
 
     await container.start();
 
-    return NextResponse.json({ status: 'success', message: 'Aplicação hospedada com sucesso!' });
+    const info = await container.inspect();
+    const allocatedPort = info.NetworkSettings.Ports[`${port}/tcp`]?.[0]?.HostPort || 'Desconhecida';
+
+    return NextResponse.json({ 
+      status: 'success', 
+      message: 'Aplicação hospedada com sucesso!',
+      allocatedPort
+    });
   } catch (error: any) {
     return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
   }
