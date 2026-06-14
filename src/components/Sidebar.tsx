@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Server, Database, Cloud, Terminal } from 'lucide-react';
+import { LayoutDashboard, Server, Database, Cloud, Terminal, HardDrive, ScrollText, Clock } from 'lucide-react';
 import styles from '../app/layout.module.css';
 
 const navItems = [
   { name: 'Visão Geral', href: '/', icon: LayoutDashboard },
   { name: 'Hospedagem', href: '/hosting', icon: Server },
   { name: 'Bancos de Dados', href: '/database', icon: Database },
-  { name: 'Funções', href: '/functions', icon: Terminal },
+  { name: 'Funções Serverless', href: '/functions', icon: Terminal },
+  { name: 'Cloud Storage', href: '/storage', icon: HardDrive },
+  { name: 'Cloud Logging', href: '/logs', icon: ScrollText },
+  { name: 'Scheduler (Cron)', href: '/scheduler', icon: Clock },
 ];
 
 export default function Sidebar() {
