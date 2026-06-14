@@ -5,6 +5,8 @@ import si from 'systeminformation';
 // Configura o Docker. No Windows, pode não conectar se o Docker Desktop não estiver rodando.
 const docker = new Docker({ socketPath: process.platform === 'win32' ? '//./pipe/docker_engine' : '/var/run/docker.sock' });
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // Busca uso de CPU e Memória RAM
