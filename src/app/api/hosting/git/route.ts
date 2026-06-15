@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 function getDockerfileTemplate(env: string, installCmd: string, buildCmd: string, startCmd: string, port: string) {
   if (env === 'node') {
     return `
-FROM node:18-alpine
+FROM node:20-slim
 WORKDIR /app
 COPY . .
 RUN ${installCmd || 'npm install'}
